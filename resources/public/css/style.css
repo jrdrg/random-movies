@@ -1,2 +1,45 @@
 /* some style */
 
+body {
+    font-family: Tahoma, Verdana, sans-serif;
+}
+
+.random-word {
+    margin-bottom: 20px;
+}
+
+.image-container {
+    flex: 1;
+}
+
+.no-image {
+    font-size: 1.5em;
+    color: #500;
+}
+
+.poster {
+}
+
+.contents {
+    flex: 3;
+}
+
+.new-random-word {
+    padding: 10px;
+    border: 1px solid gray;
+    background-color: light-gray;
+    margin-bottom: 20px;
+}
+
+.movies-list {
+    list-style-type: none;
+    border-top: 1px solid lightgray;
+}
+
+.movie-item {
+    border-bottom: 1px solid lightgray;
+    margin: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: row;
+}

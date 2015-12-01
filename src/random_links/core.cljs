@@ -21,7 +21,7 @@
 
 ; normalize the data from the api since it has different structure depending on error or not
 (defmulti movies-list (fn [result] [(.hasOwnProperty result "Search") (.hasOwnProperty result "Error")]))
-(defmethod movies-list [true false] [result] (map (fn [i] {:type :result :item i}) (.-Search result)))
+(defmethod movies-list [true false] [result] (map (fn [i] {:type :result :item (js->clj i)}) (.-Search result)))
 (defmethod movies-list [false true] [result] [{:type :error :item (.-Error result)}])
 
 (defn GET [url]
@@ -66,7 +66,7 @@
         (let [word (<! ch)]
           (update-random-word word)
           (get-search-results-and-update word)
-          (<! (timeout 1000)))
+          (<! (timeout 1000))) ;this timeout is just here to play with core.async stuff
         (reset! button-disabled false))))
 
 ;; components
@@ -78,22 +78,30 @@
 
 (defmethod movie-item :result [movie]
   (let [item (:item movie)]
-    [:div item]))
+    [:li.movie-item
+     [:div.image-container
+      (let [src (get item "Poster")]
+        (if (= src "N/A")
+          [:div.no-image "No image"]
+          [:img.poster {:src (get item "Poster")}]))]
+     [:div.contents
+      [:div.title (get item "Title")]
+      [:div.year (get item "Year")]]]))
 
 (defn movie-info []
   (let [movies (:movies-list @app-state)]
-    [:div (map #(movie-item %) movies)]))
+    [:ul.movies-list (map #(movie-item %) movies)]))
 
 (defn random-word-display []
-  [:div (str "Random word: " (:random-word @app-state))])
+  [:div.random-word (str "Random word: " (:random-word @app-state))])
 
 (defn get-new-word-button []
   (let [disabled (atom false)]
     (fn []
-      [:input {:type "button"
-               :disabled @disabled
-               :on-click #(get-word-and-update disabled)
-               :value "new random word"}])))
+      [:input.new-random-word {:type "button"
+                               :disabled @disabled
+                               :on-click #(get-word-and-update disabled)
+                               :value "new random word"}])))
 
 (defn main-app []
   [:div
