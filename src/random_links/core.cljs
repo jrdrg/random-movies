@@ -43,11 +43,7 @@
     (.send jsonp nil on-success on-failure)
     ch))
 
-
 (defn update-movie-info [results]
-  (.log js/console results)
-  (.log js/console (.hasOwnProperty results "Error"))
-  (.log js/console (.hasOwnProperty results "Search"))
   (swap! app-state assoc :movies-list (into [] (movies-list results))))
 
 (defn update-random-word [word]
@@ -66,7 +62,7 @@
         (let [word (<! ch)]
           (update-random-word word)
           (get-search-results-and-update word)
-          (<! (timeout 1000))) ;this timeout is just here to play with core.async stuff
+          (<! (timeout 500))) ;this timeout is just here to play with core.async stuff
         (reset! button-disabled false))))
 
 ;; components
