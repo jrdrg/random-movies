@@ -11,7 +11,7 @@
 ;; define your app data so that it doesn't get over-written on reload
 (defonce app-state (atom {:text "Movies containing random words"
                           :random-word nil
-                          :movie-info {}
+                          :movies-list []
                           :url-list []}))
 
 (def random-word-url "http://randomword.setgetgo.com/get.php")
@@ -19,6 +19,10 @@
 (defn search-url [term]
   (str "http://www.omdbapi.com/?s=" term))
 
+; normalize the data from the api since it has different structure depending on error or not
+(defmulti movies-list (fn [result] [(.hasOwnProperty result "Search") (.hasOwnProperty result "Error")]))
+(defmethod movies-list [true false] [result] (map (fn [i] {:type :result :item i}) (.-Search result)))
+(defmethod movies-list [false true] [result] [{:type :error :item (.-Error result)}])
 
 (defn GET [url]
   "Sends a GET request to the specified URL"
@@ -39,9 +43,12 @@
     (.send jsonp nil on-success on-failure)
     ch))
 
-(defn update-movie-info [movie-info]
-  (.log js/console movie-info)
-  )
+
+(defn update-movie-info [results]
+  (.log js/console results)
+  (.log js/console (.hasOwnProperty results "Error"))
+  (.log js/console (.hasOwnProperty results "Search"))
+  (swap! app-state assoc :movies-list (into [] (movies-list results))))
 
 (defn update-random-word [word]
   "Updates the random-text value in app-state"
@@ -64,12 +71,18 @@
 
 ;; components
 
-(defn movie-item [movie]
-  [:div (:Title movie)])
+(defmulti movie-item (fn [movie] (:type movie)))
+
+(defmethod movie-item :error [movie]
+  [:div "Error, movie not found"])
+
+(defmethod movie-item :result [movie]
+  (let [item (:item movie)]
+    [:div item]))
 
 (defn movie-info []
-  (let [movie (:movie-info app-state)]
-    [:div (map movie movie-item)]))
+  (let [movies (:movies-list @app-state)]
+    [:div (map #(movie-item %) movies)]))
 
 (defn random-word-display []
   [:div (str "Random word: " (:random-word @app-state))])
@@ -86,8 +99,8 @@
   [:div
    [:h1 (:text @app-state)]
    [random-word-display]
-   [get-new-word-button] ])
-;   [movie-info]])
+   [get-new-word-button]
+   [movie-info]])
 
 (reagent/render-component [main-app]
                           (. js/document (getElementById "app")))
