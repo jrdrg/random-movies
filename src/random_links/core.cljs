@@ -21,7 +21,7 @@
 
 ; normalize the data from the api since it has different structure depending on error or not
 (defmulti movies-list (fn [result] [(.hasOwnProperty result "Search") (.hasOwnProperty result "Error")]))
-(defmethod movies-list [true false] [result] (map (fn [i] {:type :result :item (js->clj i)}) (.-Search result)))
+(defmethod movies-list [true false] [result] (map (fn [i] {:type :result :item (js->clj i :keywordize-keys true)}) (.-Search result)))
 (defmethod movies-list [false true] [result] [{:type :error :item (.-Error result)}])
 
 (defn GET [url]
@@ -76,13 +76,13 @@
   (let [item (:item movie)]
     [:li.movie-item
      [:div.image-container
-      (let [src (get item "Poster")]
+      (let [src (:Poster item)]
         (if (= src "N/A")
           [:div.no-image "No image"]
-          [:img.poster {:src (get item "Poster")}]))]
+          [:img.poster {:src src}]))]
      [:div.contents
-      [:div.title (get item "Title")]
-      [:div.year (get item "Year")]]]))
+      [:div.title (:Title item)]
+      [:div.year (:Year item)]]]))
 
 (defn movie-info []
   (let [movies (:movies-list @app-state)]
